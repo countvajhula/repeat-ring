@@ -52,7 +52,7 @@
 (defun fixture-all-ring (body)
   (let ((rring nil))
     (unwind-protect
-        (progn (setq rring (repeat-ring-make (lambda () t)))
+        (progn (setq rring (repeat-ring-make (lambda (_key-seq) t)))
                (funcall body))
       ;; perhaps aid garbage collection
       (setq rring nil))))
@@ -60,10 +60,32 @@
 (defun fixture-none-ring (body)
   (let ((rring nil))
     (unwind-protect
-        (progn (setq rring (repeat-ring-make (lambda () nil)))
+        (progn (setq rring (repeat-ring-make (lambda (_key-seq) nil)))
                (funcall body))
       ;; perhaps aid garbage collection
       (setq rring nil))))
+
+(defvar fixture-single-key [108]
+  "A sequence representing a single key press (the letter l).")
+
+(defvar fixture-multi-key [3 102]
+  "A sequence representing a multi key event (C-c f).")
+
+(defvar fixture-key-sequence [108 3 102]
+  "A sequence representing a composed key sequence (l C-c f).")
+
+(defun fixture-1-ring (body-1)
+  (with-fixture fixture-all-ring
+    (repeat-ring-store rring fixture-single-key)
+    (funcall body-1)))
+
+(defmacro with-pub-sub (&rest test)
+  (declare (indent 0))
+  `(lambda ()
+     (unwind-protect
+         (progn (repeat-ring-subscribe rring)
+                ,@test)
+       (repeat-ring-unsubscribe rring))))
 
 ;;
 ;; Tests
@@ -71,7 +93,7 @@
 
 (ert-deftest repeat-ring-test ()
   ;; null constructor
-  (should (vectorp (repeat-ring-make (lambda () t))))
+  (should (vectorp (repeat-ring-make (lambda (_key-seq) t))))
 
   ;; repeat-ring-ring-ring
   (with-fixture fixture-all-ring
@@ -80,3 +102,50 @@
   ;; repeat-ring-ring-ring
   (with-fixture fixture-all-ring
     (should (functionp (repeat-ring-ring-criteria rring)))))
+
+(ert-deftest repeat-ring-pub-sub-test ()
+  (should (with-fixture fixture-all-ring
+            (with-pub-sub
+              (dynaring-contains-p repeat-ring-active-rings
+                                   rring)))))
+
+(ert-deftest repeat-ring-last-command-test ()
+  (should (with-fixture fixture-1-ring
+            (equal (repeat-ring-last-command rring)
+                   fixture-single-key))))
+
+(ert-deftest repeat-ring-check-criteria-test ()
+  (should (with-fixture fixture-all-ring
+            (repeat-ring-check-criteria rring
+                                        fixture-single-key)))
+  (should-not (with-fixture fixture-none-ring
+                (repeat-ring-check-criteria rring
+                                            fixture-single-key))))
+
+(ert-deftest repeat-ring-store-test ()
+  (should
+   (with-fixture fixture-all-ring
+     (repeat-ring-store rring
+                        fixture-single-key)))
+  (should-not
+   (with-fixture fixture-none-ring
+     (repeat-ring-store rring
+                        fixture-single-key)))
+  (should
+   ;; should store if distinct from previous
+   (with-fixture fixture-1-ring
+     (repeat-ring-store rring
+                        fixture-multi-key)))
+  (should-not
+   ;; should not store successive duplicates
+   (with-fixture fixture-1-ring
+     (repeat-ring-store rring
+                        fixture-single-key))))
+
+(ert-deftest repeat-ring-contents-test ()
+  (should-not
+   (with-fixture fixture-all-ring
+     (repeat-ring-contents rring)))
+  (should
+   (with-fixture fixture-1-ring
+     (repeat-ring-contents rring))))
