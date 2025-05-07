@@ -73,10 +73,10 @@ for storing key sequences in it."
 (defun repeat-ring-initialize ()
   "Initialize repeat ring.
 
-This adds key sequence publishing to Emacs's `post-command-hook` so
+This adds key sequence publishing to Emacs's `pre-command-hook` so
 that active repeat rings can be notified of them, and adds an initial
 basic repeat ring that stores all key sequences."
-  (add-hook 'post-command-hook #'repeat-ring-notify)
+  (add-hook 'pre-command-hook #'repeat-ring-notify)
   (repeat-ring-subscribe repeat-ring-recent-keys))
 
 (defun repeat-ring-last-command (rring)
