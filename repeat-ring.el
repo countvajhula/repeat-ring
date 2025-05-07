@@ -123,8 +123,8 @@ in order to be stored."
   (interactive)
   (dynaring-rotate-left repeat-ring-active-rings))
 
-(defun repeat-ring-rotate-ring-forwards ()
-  "Rotate the ring of repeat rings forwards."
+(defun repeat-ring-rotate-ring-backwards ()
+  "Rotate the ring of repeat rings backwards."
   (interactive)
   (dynaring-rotate-right repeat-ring-active-rings))
 
