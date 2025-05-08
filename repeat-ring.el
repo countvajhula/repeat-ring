@@ -118,6 +118,12 @@ in order to be stored."
    (repeat-ring-last-command
     (dynaring-value repeat-ring-active-rings))))
 
+(defun repeat-ring-repeat-for-ring (rring)
+  "Repeat the last command on the repeat ring RRING."
+  (interactive)
+  (execute-kbd-macro
+   (repeat-ring-last-command rring)))
+
 (defun repeat-ring-rotate-ring-forwards ()
   "Rotate the ring of repeat rings forwards."
   (interactive)
