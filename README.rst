@@ -20,6 +20,20 @@ Repeat-ring allows you to define "regex"-like patterns on your keyboard activity
 
 It's like Emacs's keyboard macros in that there is a history of macros maintained on a ring, and it's like Vim's dot operator in that it records such macros *implicitly* based on patterns that you configure. In addition, it supports any number of rings and arbitrary conditions for recording activity, enabling a rich diversity of context-sensitive repeatable macros.
 
+Installation
+------------
+
+Repeat-ring is not on a package archive such as `MELPA <https://melpa.org/>`_ yet, but you can install it using `Straight.el <https://github.com/radian-software/straight.el>`_ (or `Elpaca <https://github.com/progfolio/elpaca>`_) by putting this somewhere in your :code:`.emacs.d`:
+
+.. code-block:: elisp
+
+  (use-package repeat-ring
+    :straight
+    (repeat-ring
+      :type git
+      :host github
+      :repo "countvajhula/repeat-ring"))
+
 How It Works
 ------------
 
