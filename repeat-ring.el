@@ -48,13 +48,16 @@ A repeat ring is an ordinary fixed-size ring that populates key
 sequences parsed on the topic NAME."
   (let* ((size (or size repeat-ring-default-size))
          (ring (make-ring size)))
-    (vector name ring)))
+    (vector name ring 0)))
 
 (defconst repeat-ring--index-name 0
   "The index of the name of the repeat ring.")
 
 (defconst repeat-ring--index-ring 1
   "The index of the underlying ring in a repeat ring.")
+
+(defconst repeat-ring--index-head 2
+  "The index of the virtual head in a repeat ring.")
 
 (defun repeat-ring-ring-name (rring)
   "Get the name of the repeat-ring RRING."
@@ -63,6 +66,18 @@ sequences parsed on the topic NAME."
 (defun repeat-ring-ring-ring (rring)
   "Get the underlying ring in RRING."
   (seq-elt rring repeat-ring--index-ring))
+
+(defun repeat-ring-ring-head (rring)
+  "Get the virtual head of RRING."
+  (seq-elt rring repeat-ring--index-head))
+
+(defun repeat-ring-ring-set-head (rring new-head)
+  "Set head on RRING to NEW-HEAD."
+  (aset rring repeat-ring--index-head new-head))
+
+(defun repeat-ring-ring-reset-head (rring)
+  "Reset head on RRING to 0 (most recent addition)."
+  (repeat-ring-ring-set-head rring 0))
 
 (defvar repeat-ring-recent-keys
   (repeat-ring-make "basic")
@@ -88,28 +103,37 @@ basic repeat ring that stores all key sequences."
   (let ((ring (repeat-ring-ring-ring rring)))
     (ring-ref ring 0)))
 
+;; TODO: review naming, with current and last could be confusing
+(defun repeat-ring-current-command (rring)
+  "The command stored on the repeat ring RRING at the current virtual head."
+  (let ((ring (repeat-ring-ring-ring rring))
+        (head (repeat-ring-ring-head rring)))
+    (ring-ref ring head)))
+
+(defun repeat-ring-rotate-forwards (rring)
+  "Rotate RRING forwards."
+  (interactive)
+  (let ((head (repeat-ring-ring-head rring)))
+    (repeat-ring-ring-set-head rring (1- head))))
+
+(defun repeat-ring-rotate-backwards (rring)
+  "Rotate RRING backwards."
+  (interactive)
+  (let ((head (repeat-ring-ring-head rring)))
+    (repeat-ring-ring-set-head rring (1+ head))))
+
 (defun repeat-ring-repeat ()
   "Repeat the last command on the most recently used repeat ring."
   (interactive)
   (execute-kbd-macro
-   (repeat-ring-last-command
+   (repeat-ring-current-command
     (dynaring-value repeat-ring-active-rings))))
 
 (defun repeat-ring-repeat-for-ring (rring)
   "Repeat the last command on the repeat ring RRING."
   (interactive)
   (execute-kbd-macro
-   (repeat-ring-last-command rring)))
-
-(defun repeat-ring-rotate-ring-forwards ()
-  "Rotate the ring of repeat rings forwards."
-  (interactive)
-  (dynaring-rotate-left repeat-ring-active-rings))
-
-(defun repeat-ring-rotate-ring-backwards ()
-  "Rotate the ring of repeat rings backwards."
-  (interactive)
-  (dynaring-rotate-right repeat-ring-active-rings))
+   (repeat-ring-current-command rring)))
 
 (defun repeat-ring-contents (rring)
   "Contents of repeat ring RRING."
@@ -117,12 +141,17 @@ basic repeat ring that stores all key sequences."
    (repeat-ring-ring-ring rring)))
 
 (defun repeat-ring-store (rring key-seq)
-  "Store KEY-SEQ as an entry in RRING."
+  "Store KEY-SEQ as an entry in RRING.
+
+Resets the virtual head to the most recently stored element,
+i.e., to KEY-SEQ."
   (let ((ring (repeat-ring-ring-ring rring)))
     (when (or (ring-empty-p ring)
               (not (equal key-seq (repeat-ring-last-command rring))))
       ;; don't record successive duplicates
-      (ring-insert ring key-seq))))
+      (ring-insert ring key-seq))
+    ;; reset the head in any case
+    (repeat-ring-ring-reset-head rring)))
 
 
 (provide 'repeat-ring)

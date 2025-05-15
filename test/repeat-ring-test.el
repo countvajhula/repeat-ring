@@ -53,6 +53,8 @@
 (defconst fixture-test-ring-name "test")
 
 (defconst fixture-test-element "abcd")
+(defconst fixture-test-element-2 "efgh")
+(defconst fixture-test-element-3 "ijkl")
 
 (defun fixture-0-ring (body)
   (let ((rring nil))
@@ -66,6 +68,16 @@
   (with-fixture fixture-0-ring
     (repeat-ring-store rring fixture-test-element)
     (funcall body-1)))
+
+(defun fixture-2-ring (body-2)
+  (with-fixture fixture-1-ring
+    (repeat-ring-store rring fixture-test-element-2)
+    (funcall body-2)))
+
+(defun fixture-3-ring (body-3)
+  (with-fixture fixture-2-ring
+    (repeat-ring-store rring fixture-test-element-3)
+    (funcall body-3)))
 
 (defmacro with-pub-sub (&rest test)
   (declare (indent 0))
@@ -90,6 +102,8 @@
                  (repeat-ring-ring-ring
                   (repeat-ring-make fixture-test-ring-name
                                     10)))))
+  (should (= 0 (repeat-ring-ring-head
+                (repeat-ring-make fixture-test-ring-name))))
 
   ;; repeat-ring-ring-name
   (with-fixture fixture-0-ring
@@ -97,7 +111,22 @@
 
   ;; repeat-ring-ring-ring
   (with-fixture fixture-0-ring
-    (should (ring-p (repeat-ring-ring-ring rring)))))
+    (should (ring-p (repeat-ring-ring-ring rring))))
+
+  ;; repeat-ring-ring-head
+  (with-fixture fixture-0-ring
+    (should (= 0 (repeat-ring-ring-head rring))))
+
+  ;; repeat-ring-ring-set-head
+  (with-fixture fixture-0-ring
+    (repeat-ring-ring-set-head rring 1)
+    (should (= 1 (repeat-ring-ring-head rring))))
+
+  ;; repeat-ring-ring-reset-head
+  (with-fixture fixture-0-ring
+    (repeat-ring-ring-set-head rring 1)
+    (repeat-ring-ring-reset-head rring)
+    (should (= 0 (repeat-ring-ring-head rring)))))
 
 (ert-deftest repeat-ring-pub-sub-test ()
   (with-fixture fixture-0-ring
@@ -110,6 +139,12 @@
   (with-fixture fixture-1-ring
     (should (equal (repeat-ring-last-command rring)
                    fixture-test-element))))
+
+(ert-deftest repeat-ring-current-command-test ()
+  (with-fixture fixture-3-ring
+    (repeat-ring-ring-set-head rring 1)
+    (should (equal (repeat-ring-current-command rring)
+                   fixture-test-element-2))))
 
 (ert-deftest repeat-ring-store-test ()
   (with-fixture fixture-0-ring
@@ -131,10 +166,50 @@
     (repeat-ring-store rring fixture-test-element)
     (should (= 1
                (ring-length
-                (repeat-ring-ring-ring rring))))))
+                (repeat-ring-ring-ring rring)))))
+  (with-fixture fixture-3-ring
+    ;; should reset head upon storing new element
+    (repeat-ring-ring-set-head rring 1)
+    (repeat-ring-store rring fixture-test-element)
+    (should (= 0 (repeat-ring-ring-head rring))))
+  (with-fixture fixture-3-ring
+    ;; should reset head upon storing new element
+    ;; even if the element isn't actually stored
+    (repeat-ring-ring-set-head rring 1)
+    (repeat-ring-store rring fixture-test-element-3)
+    (should (= 0 (repeat-ring-ring-head rring))))
+  (with-fixture fixture-3-ring
+    ;; should store elements in order of recency
+    (repeat-ring-store rring fixture-test-element)
+    (should (equal (list fixture-test-element ; most recently added
+                         fixture-test-element-3
+                         fixture-test-element-2
+                         fixture-test-element)
+                   (repeat-ring-contents rring))))
+  (with-fixture fixture-3-ring
+    ;; should store new element at underlying ring head
+    ;; (i.e., in order of most recently stored)
+    ;; even if surface ring "virtual" head is different
+    (repeat-ring-ring-set-head rring 1)
+    (repeat-ring-store rring fixture-test-element)
+    (should (equal (list fixture-test-element ; most recently added
+                         fixture-test-element-3
+                         fixture-test-element-2
+                         fixture-test-element)
+                   (repeat-ring-contents rring)))))
 
 (ert-deftest repeat-ring-contents-test ()
   (with-fixture fixture-0-ring
     (should-not (repeat-ring-contents rring)))
   (with-fixture fixture-1-ring
     (should (repeat-ring-contents rring))))
+
+(ert-deftest repeat-ring-rotate-test ()
+  (with-fixture fixture-3-ring
+    (repeat-ring-rotate-forwards rring)
+    (should (equal fixture-test-element
+                   (repeat-ring-current-command rring))))
+  (with-fixture fixture-3-ring
+    (repeat-ring-rotate-backwards rring)
+    (should (equal fixture-test-element-2
+                   (repeat-ring-current-command rring)))))
