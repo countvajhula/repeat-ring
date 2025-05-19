@@ -50,16 +50,16 @@
     (lambda ()
       ,@test)))
 
-(defconst fixture-test-ring-name "test")
-
 (defconst fixture-test-element "abcd")
 (defconst fixture-test-element-2 "efgh")
 (defconst fixture-test-element-3 "ijkl")
 
+(defconst fixture-test-topic-name "dummy-topic")
+
 (defun fixture-0-ring (body)
   (let ((rring nil))
     (unwind-protect
-        (progn (setq rring (repeat-ring-make fixture-test-ring-name #'identity))
+        (progn (setq rring (repeat-ring-make #'identity))
                (funcall body))
       ;; perhaps aid garbage collection
       (setq rring nil))))
@@ -83,11 +83,10 @@
   (declare (indent 0))
   `(lambda ()
      (unwind-protect
-         (progn (pubsub-subscribe (repeat-ring-ring-name rring)
-                                  (apply-partially #'repeat-ring-store
-                                                   rring))
+         (progn (repeat-ring-subscribe rring
+                                       fixture-test-topic-name)
                 ,@test)
-       (pop (gethash (repeat-ring-ring-name rring)
+       (pop (gethash fixture-test-topic-name
                      pubsub-board)))))
 
 ;;
@@ -96,19 +95,14 @@
 
 (ert-deftest repeat-ring-test ()
   ;; null constructor
-  (should (vectorp (repeat-ring-make fixture-test-ring-name #'identity)))
-  (should (vectorp (repeat-ring-make fixture-test-ring-name #'identity 10)))
+  (should (vectorp (repeat-ring-make #'identity)))
+  (should (vectorp (repeat-ring-make #'identity 10)))
   (should (= 10 (ring-size
                  (repeat-ring-ring-ring
-                  (repeat-ring-make fixture-test-ring-name
-                                    #'identity
+                  (repeat-ring-make #'identity
                                     10)))))
   (should (= 0 (repeat-ring-ring-head
-                (repeat-ring-make fixture-test-ring-name #'identity))))
-
-  ;; repeat-ring-ring-name
-  (with-fixture fixture-0-ring
-    (should (equal fixture-test-ring-name (repeat-ring-ring-name rring))))
+                (repeat-ring-make #'identity))))
 
   ;; repeat-ring-ring-ring
   (with-fixture fixture-0-ring
@@ -132,7 +126,7 @@
 (ert-deftest repeat-ring-pub-sub-test ()
   (with-fixture fixture-0-ring
     (with-pub-sub
-     (pubsub-publish (repeat-ring-ring-name rring) fixture-test-element)
+     (pubsub-publish fixture-test-topic-name fixture-test-element)
      (should (ring-member (repeat-ring-ring-ring rring)
                           fixture-test-element)))))
 

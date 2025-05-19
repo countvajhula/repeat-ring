@@ -40,31 +40,23 @@
 
 This is a dynamically sized ring.")
 
-;; TODO: should the ring not be coupled to pubsub via the name?
-(defun repeat-ring-make (name action &optional size)
+(defun repeat-ring-make (action &optional size)
   "Make a repeat ring named NAME of size SIZE.
 
 A repeat ring is an ordinary fixed-size ring that populates key
 sequences parsed on the topic NAME."
   (let* ((size (or size repeat-ring-default-size))
          (ring (make-ring size)))
-    (vector name ring action 0)))
+    (vector ring action 0)))
 
-(defconst repeat-ring--index-name 0
-  "The index of the name of the repeat ring.")
-
-(defconst repeat-ring--index-ring 1
+(defconst repeat-ring--index-ring 0
   "The index of the underlying ring in a repeat ring.")
 
-(defconst repeat-ring--index-action 2
+(defconst repeat-ring--index-action 1
   "The index of the action in a repeat ring.")
 
-(defconst repeat-ring--index-head 3
+(defconst repeat-ring--index-head 2
   "The index of the virtual head in a repeat ring.")
-
-(defun repeat-ring-ring-name (rring)
-  "Get the name of the repeat-ring RRING."
-  (seq-elt rring repeat-ring--index-name))
 
 (defun repeat-ring-ring-ring (rring)
   "Get the underlying ring in RRING."
@@ -87,8 +79,13 @@ sequences parsed on the topic NAME."
   (repeat-ring-ring-set-head rring 0))
 
 (defvar repeat-ring-recent-keys
-  (repeat-ring-make "basic" #'execute-kbd-macro)
+  (repeat-ring-make #'execute-kbd-macro)
   "A ring to store all recent key sequences.")
+
+(defun repeat-ring-subscribe (rring topic)
+  "Subscribe RRING to TOPIC."
+  (pubsub-subscribe topic
+                    (apply-partially #'repeat-ring-store rring)))
 
 (defun repeat-ring-initialize ()
   "Initialize repeat ring.
@@ -99,11 +96,8 @@ basic repeat ring that stores all key sequences."
   ;; add the default repeat ring that stores all key sequences
   (dynaring-insert repeat-ring-active-rings
                    repeat-ring-recent-keys)
-  (let ((add-to-default-ring (lambda (key-seq)
-                               (repeat-ring-store repeat-ring-recent-keys
-                                                  key-seq))))
-    (pubsub-subscribe (repeat-ring-ring-name repeat-ring-recent-keys)
-                      add-to-default-ring)))
+  (repeat-ring-subscribe repeat-ring-recent-keys
+                         "mantra-all-key-sequences"))
 
 (defun repeat-ring-last-command (rring)
   "The last command stored on the repeat ring RRING."
