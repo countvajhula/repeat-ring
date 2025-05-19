@@ -59,7 +59,7 @@
 (defun fixture-0-ring (body)
   (let ((rring nil))
     (unwind-protect
-        (progn (setq rring (repeat-ring-make fixture-test-ring-name))
+        (progn (setq rring (repeat-ring-make fixture-test-ring-name #'identity))
                (funcall body))
       ;; perhaps aid garbage collection
       (setq rring nil))))
@@ -96,14 +96,15 @@
 
 (ert-deftest repeat-ring-test ()
   ;; null constructor
-  (should (vectorp (repeat-ring-make fixture-test-ring-name)))
-  (should (vectorp (repeat-ring-make fixture-test-ring-name 10)))
+  (should (vectorp (repeat-ring-make fixture-test-ring-name #'identity)))
+  (should (vectorp (repeat-ring-make fixture-test-ring-name #'identity 10)))
   (should (= 10 (ring-size
                  (repeat-ring-ring-ring
                   (repeat-ring-make fixture-test-ring-name
+                                    #'identity
                                     10)))))
   (should (= 0 (repeat-ring-ring-head
-                (repeat-ring-make fixture-test-ring-name))))
+                (repeat-ring-make fixture-test-ring-name #'identity))))
 
   ;; repeat-ring-ring-name
   (with-fixture fixture-0-ring

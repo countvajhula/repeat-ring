@@ -41,14 +41,14 @@
 This is a dynamically sized ring.")
 
 ;; TODO: should the ring not be coupled to pubsub via the name?
-(defun repeat-ring-make (name &optional size)
+(defun repeat-ring-make (name action &optional size)
   "Make a repeat ring named NAME of size SIZE.
 
 A repeat ring is an ordinary fixed-size ring that populates key
 sequences parsed on the topic NAME."
   (let* ((size (or size repeat-ring-default-size))
          (ring (make-ring size)))
-    (vector name ring 0)))
+    (vector name ring action 0)))
 
 (defconst repeat-ring--index-name 0
   "The index of the name of the repeat ring.")
@@ -56,7 +56,10 @@ sequences parsed on the topic NAME."
 (defconst repeat-ring--index-ring 1
   "The index of the underlying ring in a repeat ring.")
 
-(defconst repeat-ring--index-head 2
+(defconst repeat-ring--index-action 2
+  "The index of the action in a repeat ring.")
+
+(defconst repeat-ring--index-head 3
   "The index of the virtual head in a repeat ring.")
 
 (defun repeat-ring-ring-name (rring)
@@ -66,6 +69,10 @@ sequences parsed on the topic NAME."
 (defun repeat-ring-ring-ring (rring)
   "Get the underlying ring in RRING."
   (seq-elt rring repeat-ring--index-ring))
+
+(defun repeat-ring-ring-action (rring)
+  "Get the action of RRING."
+  (seq-elt rring repeat-ring--index-action))
 
 (defun repeat-ring-ring-head (rring)
   "Get the virtual head of RRING."
@@ -80,7 +87,7 @@ sequences parsed on the topic NAME."
   (repeat-ring-ring-set-head rring 0))
 
 (defvar repeat-ring-recent-keys
-  (repeat-ring-make "basic")
+  (repeat-ring-make "basic" #'execute-kbd-macro)
   "A ring to store all recent key sequences.")
 
 (defun repeat-ring-initialize ()
@@ -125,15 +132,15 @@ basic repeat ring that stores all key sequences."
 (defun repeat-ring-repeat ()
   "Repeat the last command on the most recently used repeat ring."
   (interactive)
-  (execute-kbd-macro
-   (repeat-ring-current-command
-    (dynaring-value repeat-ring-active-rings))))
+  (let ((rring (dynaring-value repeat-ring-active-rings)))
+    (funcall (repeat-ring-ring-action rring)
+             (repeat-ring-current-command rring))))
 
 (defun repeat-ring-repeat-for-ring (rring)
   "Repeat the last command on the repeat ring RRING."
   (interactive)
-  (execute-kbd-macro
-   (repeat-ring-current-command rring)))
+  (funcall (repeat-ring-ring-action rring)
+           (repeat-ring-current-command rring)))
 
 (defun repeat-ring-contents (rring)
   "Contents of repeat ring RRING."
