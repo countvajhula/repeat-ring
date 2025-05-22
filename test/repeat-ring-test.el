@@ -146,9 +146,10 @@
                (should (ring-member
                         (virtual-ring-ring
                          (repeat-ring-ring rring))
-                        fixture-test-element))))
-    (pop (gethash fixture-test-topic-name
-                  pubsub-board)))
+                        fixture-test-element)))
+      (repeat-ring-unsubscribe rring)
+      (pop (gethash fixture-test-topic-name
+                    pubsub-board))))
   (with-fixture fixture-0-ring
     (unwind-protect
         (progn (repeat-ring-subscribe rring nil)
@@ -159,9 +160,10 @@
                (should-not (ring-member
                             (virtual-ring-ring
                              (repeat-ring-ring rring))
-                            fixture-test-element))))
-    (pop (gethash fixture-test-topic-name
-                  pubsub-board)))
+                            fixture-test-element)))
+      (repeat-ring-unsubscribe rring)
+      (pop (gethash fixture-test-topic-name
+                    pubsub-board))))
   ;; "all" subscribes to all key sequences
   (with-fixture fixture-0-ring
     (unwind-protect
@@ -170,9 +172,10 @@
                (should (ring-member
                         (virtual-ring-ring
                          (repeat-ring-ring rring))
-                        fixture-test-element))))
-    (pop (gethash fixture-all-topic-name
-                  pubsub-board))))
+                        fixture-test-element)))
+      (repeat-ring-unsubscribe rring)
+      (pop (gethash fixture-all-topic-name
+                    pubsub-board)))))
 
 (ert-deftest repeat-ring-repeat-for-ring ()
   (with-fixture fixture-0-ring

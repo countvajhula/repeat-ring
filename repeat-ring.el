@@ -90,6 +90,15 @@ Also add RRING to the global dynamic ring of repeat rings."
       (pubsub-subscribe topic
                         (apply-partially #'repeat-ring-store rring)))))
 
+(defun repeat-ring-unsubscribe (rring)
+  "Remove RRING from the ring of active rings.
+
+This doesn't unsubscribe the ring from pub/sub, as identifying the
+corresponding subscriber callback isn't generally possible unless we
+change the approach used in the `pubpub' package to introduce an
+indirection via a symbolic identifier that would then pull up the
+callback, instead of calling the callback directly."
+  (dynaring-delete repeat-ring-active-rings rring))
 
 (defun repeat-ring--repeat (rring key-seq)
   "Repeat KEY-SEQ.
