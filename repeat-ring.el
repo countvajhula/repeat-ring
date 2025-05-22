@@ -103,9 +103,13 @@ Also add RRING to the global dynamic ring of repeat rings."
     (virtual-ring-rotate-backwards ring)))
 
 (defun repeat-ring--repeat (rring key-seq)
-  "Repeat KEY-SEQ."
+  "Repeat KEY-SEQ.
+
+Restore RRING as the head of `repeat-ring-active-rings', the dynamic
+ring of repeat rings where head is the most recently used one."
   (repeat-ring-set-repeating rring key-seq)
-  (execute-kbd-macro key-seq))
+  (execute-kbd-macro key-seq)
+  (dynaring-break-insert repeat-ring-active-rings rring))
 
 (defun repeat-ring-repeat-for-ring (rring)
   "Repeat the last command on the repeat ring RRING."
@@ -113,10 +117,14 @@ Also add RRING to the global dynamic ring of repeat rings."
                     (repeat-ring-ring rring))))
     (repeat-ring--repeat rring to-repeat)))
 
+(defun repeat-ring-current-ring ()
+  "The most recently used repeat ring."
+  (dynaring-value repeat-ring-active-rings))
+
 (defun repeat-ring-repeat ()
   "Repeat the last command on the most recently used repeat ring."
   (interactive)
-  (let ((rring (dynaring-value repeat-ring-active-rings)))
+  (let ((rring (repeat-ring-current-ring)))
     (repeat-ring-repeat-for-ring rring)))
 
 (defun repeat-ring-repeat-pop-for-ring (rring)
@@ -137,7 +145,7 @@ repetition in the ring, and executes the previous entry."
 This undoes the previous repetition, removes the record of the
 repetition in the ring, and executes the previous entry."
   (interactive)
-  (let ((rring (dynaring-value repeat-ring-active-rings)))
+  (let ((rring (repeat-ring-current-ring)))
     (repeat-ring-repeat-pop-for-ring rring)))
 
 (defun repeat-ring-repeat-recent-for-ring (rring)
@@ -155,7 +163,7 @@ repetition in the ring, and executes the previous entry."
 (defun repeat-ring-repeat-recent ()
   "Select a recent command on the most recently used repeat ring and repeat it."
   (interactive)
-  (let ((rring (dynaring-value repeat-ring-active-rings)))
+  (let ((rring (repeat-ring-current-ring)))
     (repeat-ring-repeat-recent-for-ring rring)))
 
 (defun repeat-ring-store (rring key-seq)

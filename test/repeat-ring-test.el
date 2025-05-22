@@ -90,6 +90,19 @@
                 ,@test)
        (pop (gethash fixture-test-topic-name
                      pubsub-board)))))
+(defun fixture-two-rings (body-4)
+  (let ((rring1 nil)
+        (rring2 nil))
+    (unwind-protect
+        (progn (setq rring1 (repeat-ring-make))
+               (setq rring2 (repeat-ring-make))
+               (repeat-ring-subscribe rring1)
+               (repeat-ring-subscribe rring2)
+               (repeat-ring-store rring1 fixture-test-element)
+               (repeat-ring-store rring2 fixture-test-element)
+               (funcall body-4))
+      (repeat-ring-unsubscribe rring1)
+      (repeat-ring-unsubscribe rring2))))
 
 ;;
 ;; Tests
@@ -135,6 +148,13 @@
               (virtual-ring-ring
                (repeat-ring-ring rring))
               fixture-test-element)))))
+(ert-deftest repeat-ring-current-ring-test ()
+  (with-fixture fixture-two-rings
+    (repeat-ring-repeat-for-ring rring1)
+    (should (equal rring1 (repeat-ring-current-ring))))
+  (with-fixture fixture-two-rings
+    (repeat-ring-repeat-for-ring rring2)
+    (should (equal rring2 (repeat-ring-current-ring)))))
 
 (ert-deftest repeat-ring-subscribe-test ()
   (with-fixture fixture-0-ring
