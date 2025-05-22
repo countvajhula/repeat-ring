@@ -47,7 +47,7 @@ A repeat ring is an ordinary fixed-size ring that populates key
 sequences parsed on the topic NAME."
   (let* ((size (or size repeat-ring-default-size))
          (ring (make-ring size)))
-    (vector ring action 0)))
+    (vector ring action 0 nil)))
 
 (defconst repeat-ring--index-ring 0
   "The index of the underlying ring in a repeat ring.")
@@ -57,6 +57,9 @@ sequences parsed on the topic NAME."
 
 (defconst repeat-ring--index-head 2
   "The index of the virtual head in a repeat ring.")
+
+(defconst repeat-ring--index-repeating 3
+  "The index of the item being repeated (if any) in a repeat ring.")
 
 (defun repeat-ring-ring-ring (rring)
   "Get the underlying ring in RRING."
@@ -77,6 +80,23 @@ sequences parsed on the topic NAME."
 (defun repeat-ring-ring-reset-head (rring)
   "Reset head on RRING to 0 (most recent addition)."
   (repeat-ring-ring-set-head rring 0))
+
+(defun repeat-ring-head-rotated-p (rring)
+  "Whether RRING's virtual head is rotated from its true head."
+  (not (= (repeat-ring-ring-head rring)
+          0)))
+
+(defun repeat-ring-repeating (rring)
+  "Get the item being repeated in RRING."
+  (seq-elt rring repeat-ring--index-repeating))
+
+(defun repeat-ring-set-repeating (rring repeating)
+  "Flag that an item is being repeated in RRING."
+  (aset rring repeat-ring--index-repeating repeating))
+
+(defun repeat-ring-clear-repeating (rring)
+  "Clear the repeating flag in RRING."
+  (aset rring repeat-ring--index-repeating nil))
 
 (defvar repeat-ring-recent-keys
   (repeat-ring-make #'execute-kbd-macro)
@@ -127,73 +147,46 @@ basic repeat ring that stores all key sequences."
   "A ring of recent commands for repetition."
   :group 'editing)
 
-(defcustom repeat-ring-noop "C-u 0 h"
-  "A key sequence that has no effect.
-
-This is dependent on your Emacs config, so while C-u 0 <command>
-should work in most cases, if you, for instance, happen to be an Evil
-user and have rebound C-u to something else, then you should use that
-other prefix here instead of C-u. Any key sequence that has _no effect
-at all_ can be used here.
-
-This key sequence is prefaced to repeated key sequences so that they
-are identifiable as repeated sequences and are not stored in the ring
-as fresh sequences (otherwise, it would be necessary to introduce
-global state to signal that we are in the middle of repetition, which
-is fragile and requires much effort and care that is made superfluous
-by employing this \"no-op\" trick."
-  :type 'string
-  :group 'repeat-ring)
-
-(setq repeat-ring-noop "M-u 0 h")  ; testing - move to init config
-
-(defvar repeat-ring--noop
-  (string-to-vector
-   (kbd repeat-ring-noop))
-  "The vector representation of the noop sequence used internally.")
-
-(defun repeat-ring--preface-with-noop (key-seq)
-  "Preface KEY-SEQ with a noop.
-
-This is useful to identify that we are in the process of repeating an
-action rather than entering a new key sequence, to avoid storing such
-repetitions as fresh entries on the repeat ring. Doing it this way
-avoids introducing a global state variable to carry this information,
-allowing us to encode this state information into the key sequence
-data itself and thereby communicate it to the function responsible for
-storing new sequences."
-  (vconcat repeat-ring--noop key-seq))
-
 (defun repeat-ring-repeat ()
   "Repeat the last command on the most recently used repeat ring."
   (interactive)
-  (let ((rring (dynaring-value repeat-ring-active-rings)))
+  (let* ((rring (dynaring-value repeat-ring-active-rings))
+         (to-repeat (repeat-ring-current-command rring)))
+    (repeat-ring-set-repeating rring to-repeat)
     (funcall (repeat-ring-ring-action rring)
-             (repeat-ring--preface-with-noop
-              (repeat-ring-current-command rring)))))
+             to-repeat)))
 
 (defun repeat-ring-repeat-for-ring (rring)
   "Repeat the last command on the repeat ring RRING."
   (interactive)
-  (funcall (repeat-ring-ring-action rring)
-           (repeat-ring--preface-with-noop
-            (repeat-ring-current-command rring))))
+  (let ((to-repeat (repeat-ring-current-command rring)))
+    (repeat-ring-set-repeating rring to-repeat)
+    (funcall (repeat-ring-ring-action rring)
+             to-repeat)))
+
+(defun repeat-ring-remove-last (rring)
+  "Remove the last (most recent) entry from RRING.
+
+Adjust head if necessary."
+  (let ((orig-head (repeat-ring-ring-head rring)))
+    (ring-remove (repeat-ring-ring-ring rring)
+                 0)))
+
+(defun repeat-ring-repeat-pop (rring)
+  "Cycle to the previous entry in the repeat ring RRING.
+
+This undoes the previous repetition, removes the record of the
+repetition in the ring, and executes the previous entry."
+  (undo-only 1)
+  (when (repeat-ring-head-rotated-p rring)
+    (repeat-ring-remove-last rring))
+  (repeat-ring-rotate-backwards rring)
+  (repeat-ring-repeat-for-ring rring))
 
 (defun repeat-ring-contents (rring)
   "Contents of repeat ring RRING."
   (ring-elements
    (repeat-ring-ring-ring rring)))
-
-(defun repeat-ring--vector-prefix-p (pfx vec)
-  "Is PFX a prefix of VEC?"
-  (if (seq-empty-p pfx)
-      t
-    (if (seq-empty-p vec)
-        nil
-      (and (equal (aref pfx 0)
-                  (aref vec 0))
-           (repeat-ring--vector-prefix-p (seq-subseq pfx 1) ; note: inefficient for vectors
-                                         (seq-subseq vec 1))))))
 
 (defun repeat-ring-store (rring key-seq)
   "Store KEY-SEQ as an entry in RRING.
@@ -206,8 +199,7 @@ i.e., to KEY-SEQ."
                                 (repeat-ring-last-command rring)))
          (successive-duplicate (equal key-seq
                                       last-stored-key-seq))
-         (repetition (repeat-ring--vector-prefix-p repeat-ring--noop
-                                                   last-stored-key-seq)))
+         (repetition (repeat-ring-repeating rring)))
     (when (or ring-empty
               ;; don't record successive duplicates
               (not successive-duplicate))
@@ -217,7 +209,8 @@ i.e., to KEY-SEQ."
     ;; Note that we still do record the repetition as a fresh
     ;; entry, as it is, in fact, the most recently executed
     ;; macro.
-    (unless repetition
+    (if repetition
+        (repeat-ring-clear-repeating rring)
       (repeat-ring-ring-reset-head rring))))
 
 
