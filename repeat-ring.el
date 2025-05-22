@@ -102,12 +102,16 @@ Also add RRING to the global dynamic ring of repeat rings."
   (let ((ring (repeat-ring-ring rring)))
     (virtual-ring-rotate-backwards ring)))
 
+(defun repeat-ring--repeat (rring key-seq)
+  "Repeat KEY-SEQ."
+  (repeat-ring-set-repeating rring key-seq)
+  (execute-kbd-macro key-seq))
+
 (defun repeat-ring-repeat-for-ring (rring)
   "Repeat the last command on the repeat ring RRING."
   (let ((to-repeat (virtual-ring-current-entry
                     (repeat-ring-ring rring))))
-    (repeat-ring-set-repeating rring to-repeat)
-    (execute-kbd-macro to-repeat)))
+    (repeat-ring--repeat rring to-repeat)))
 
 (defun repeat-ring-repeat ()
   "Repeat the last command on the most recently used repeat ring."
@@ -135,6 +139,24 @@ repetition in the ring, and executes the previous entry."
   (interactive)
   (let ((rring (dynaring-value repeat-ring-active-rings)))
     (repeat-ring-repeat-pop-for-ring rring)))
+
+(defun repeat-ring-repeat-recent-for-ring (rring)
+  "Select a recent command on RRING and repeat it."
+  (let* ((key-seqs (virtual-ring-contents
+                    (repeat-ring-ring rring)))
+         (key-descriptions (mapcar #'key-description
+                                   key-seqs))
+         (to-repeat-str (completing-read "Repeat: "
+                                         key-descriptions))
+         (index (cl-position to-repeat-str key-descriptions :test #'equal))
+         (to-repeat (nth index key-seqs)))
+    (repeat-ring--repeat rring to-repeat)))
+
+(defun repeat-ring-repeat-recent ()
+  "Select a recent command on the most recently used repeat ring and repeat it."
+  (interactive)
+  (let ((rring (dynaring-value repeat-ring-active-rings)))
+    (repeat-ring-repeat-recent-for-ring rring)))
 
 (defun repeat-ring-store (rring key-seq)
   "Store KEY-SEQ as an entry in RRING.
