@@ -90,17 +90,6 @@ Also add RRING to the global dynamic ring of repeat rings."
       (pubsub-subscribe topic
                         (apply-partially #'repeat-ring-store rring)))))
 
-(defun repeat-ring-rotate-forwards (rring)
-  "Rotate RRING forwards."
-  (interactive)
-  (let ((ring (repeat-ring-ring rring)))
-    (virtual-ring-rotate-forwards ring)))
-
-(defun repeat-ring-rotate-backwards (rring)
-  "Rotate RRING backwards."
-  (interactive)
-  (let ((ring (repeat-ring-ring rring)))
-    (virtual-ring-rotate-backwards ring)))
 
 (defun repeat-ring--repeat (rring key-seq)
   "Repeat KEY-SEQ.

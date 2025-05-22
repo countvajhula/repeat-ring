@@ -189,18 +189,6 @@
     (repeat-ring-repeat-for-ring rring)
     (should (repeat-ring-repeating rring))))
 
-(ert-deftest repeat-ring-rotate-test ()
-  (with-fixture fixture-3-ring
-    (repeat-ring-rotate-forwards rring)
-    (should (equal fixture-test-element
-                   (virtual-ring-current-entry
-                    (repeat-ring-ring rring)))))
-  (with-fixture fixture-3-ring
-    (repeat-ring-rotate-backwards rring)
-    (should (equal fixture-test-element-2
-                   (virtual-ring-current-entry
-                    (repeat-ring-ring rring))))))
-
 (ert-deftest repeat-ring-store-test ()
   (with-fixture fixture-0-ring
     ;; stores any key sequence if ring is empty
