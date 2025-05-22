@@ -143,10 +143,6 @@ basic repeat ring that stores all key sequences."
   (let ((head (repeat-ring-ring-head rring)))
     (repeat-ring-ring-set-head rring (1+ head))))
 
-(defgroup repeat-ring nil
-  "A ring of recent commands for repetition."
-  :group 'editing)
-
 (defun repeat-ring-repeat ()
   "Repeat the last command on the most recently used repeat ring."
   (interactive)
