@@ -81,15 +81,6 @@
     (repeat-ring-store rring fixture-test-element-3)
     (funcall body-3)))
 
-(defmacro with-pub-sub (&rest test)
-  (declare (indent 0))
-  `(lambda ()
-     (unwind-protect
-         (progn (repeat-ring-subscribe rring
-                                       fixture-test-topic-name)
-                ,@test)
-       (pop (gethash fixture-test-topic-name
-                     pubsub-board)))))
 (defun fixture-two-rings (body-4)
   (let ((rring1 nil)
         (rring2 nil))
@@ -139,15 +130,6 @@
     (repeat-ring-clear-repeating rring)
     (should-not (repeat-ring-repeating rring))))
 
-
-(ert-deftest repeat-ring-pub-sub-test ()
-  (with-fixture fixture-0-ring
-    (with-pub-sub
-     (pubsub-publish fixture-test-topic-name fixture-test-element)
-     (should (ring-member
-              (virtual-ring-ring
-               (repeat-ring-ring rring))
-              fixture-test-element)))))
 (ert-deftest repeat-ring-current-ring-test ()
   (with-fixture fixture-two-rings
     (repeat-ring-repeat-for-ring rring1)
