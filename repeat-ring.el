@@ -164,9 +164,8 @@ basic repeat ring that stores all key sequences."
   "Remove the last (most recent) entry from RRING.
 
 Adjust head if necessary."
-  (let ((orig-head (repeat-ring-ring-head rring)))
-    (ring-remove (repeat-ring-ring-ring rring)
-                 0)))
+  (ring-remove (repeat-ring-ring-ring rring)
+               0))
 
 (defun repeat-ring-repeat-pop (rring)
   "Cycle to the previous entry in the repeat ring RRING.
