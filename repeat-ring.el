@@ -3,7 +3,7 @@
 ;; Author: Sid Kasivajhula <sid@countvajhula.com>
 ;; URL: https://github.com/countvajhula/repeat-ring
 ;; Version: 0.0
-;; Package-Requires: ((emacs "25.1") (dynaring "0.3") (virtual-ring "0.0") (pubsub "0.0") (mantra "0.0"))
+;; Package-Requires: ((emacs "25.1") (virtual-ring "0.0") (pubsub "0.0"))
 
 ;; This file is NOT a part of Gnu Emacs.
 
@@ -29,16 +29,9 @@
 ;;; Code:
 
 (require 'virtual-ring)
-(require 'dynaring)
 (require 'pubsub)
 
 (defconst repeat-ring-default-size 20)
-
-(defvar repeat-ring-active-rings
-  (dynaring-make)
-  "Repeat rings that are actively recording commands.
-
-This is a dynamically sized ring.")
 
 (defun repeat-ring-make (name &optional size)
   "Make a repeat ring named NAME of size SIZE.
@@ -82,39 +75,20 @@ and may be used to unsubscribe the ring from these key sequences.")
   "Clear the repeating flag in RRING."
   (aset rring repeat-ring--index-repeating nil))
 
-(defun repeat-ring-subscribe (rring &optional topic)
+(defun repeat-ring-subscribe (rring topic)
   "Subscribe RRING to TOPIC.
-
-If TOPIC isn't specified, RRING will not be subscribed to keyboard
-events and it will be up to you to populate it with repeatable
-commands any way you see fit. If TOPIC is `all', then the ring will be
-subscribed to all complete key sequences.
 
 The ring will be subscribed to TOPIC using its name as the subscriber
 name. This allows the ring name to be used to subsequently unsubscribe
-from TOPIC, if desired.
+from TOPIC, if desired."
+  (pubsub-subscribe topic
+                    (repeat-ring-name rring)
+                    (apply-partially #'repeat-ring-store rring)))
 
-Also add RRING to the global dynamic ring of repeat rings."
-  (dynaring-insert repeat-ring-active-rings
-                   rring)
-  (let ((topic (if (eq 'all topic)
-                   ;; parser that publishes all complete key sequences
-                   "mantra-all-key-sequences"
-                 topic)))
-    (when topic
-      (pubsub-subscribe topic
-                        (repeat-ring-name rring)
-                        (apply-partially #'repeat-ring-store rring)))))
-
-(defun repeat-ring-unsubscribe (rring)
-  "Remove RRING from the ring of active rings.
-
-This doesn't unsubscribe the ring from pub/sub, as identifying the
-corresponding subscriber callback isn't generally possible unless we
-change the approach used in the `pubpub' package to introduce an
-indirection via a symbolic identifier that would then pull up the
-callback, instead of calling the callback directly."
-  (dynaring-delete repeat-ring-active-rings rring))
+(defun repeat-ring-unsubscribe (rring topic)
+  "Unsubscribe RRING from TOPIC."
+  (pubsub-unsubscribe topic
+                      (repeat-ring-name rring)))
 
 (defun repeat-ring--repeat (rring key-seq)
   "Repeat KEY-SEQ.
@@ -122,26 +96,15 @@ callback, instead of calling the callback directly."
 Restore RRING as the head of `repeat-ring-active-rings', the dynamic
 ring of repeat rings where head is the most recently used one."
   (repeat-ring-set-repeating rring key-seq)
-  (execute-kbd-macro key-seq)
-  (dynaring-break-insert repeat-ring-active-rings rring))
+  (execute-kbd-macro key-seq))
 
-(defun repeat-ring-repeat-for-ring (rring)
+(defun repeat-ring-repeat (rring)
   "Repeat the last command on the repeat ring RRING."
   (let ((to-repeat (virtual-ring-current-entry
                     (repeat-ring-ring rring))))
     (repeat-ring--repeat rring to-repeat)))
 
-(defun repeat-ring-current-ring ()
-  "The most recently used repeat ring."
-  (dynaring-value repeat-ring-active-rings))
-
-(defun repeat-ring-repeat ()
-  "Repeat the last command on the most recently used repeat ring."
-  (interactive)
-  (let ((rring (repeat-ring-current-ring)))
-    (repeat-ring-repeat-for-ring rring)))
-
-(defun repeat-ring-repeat-pop-for-ring (rring)
+(defun repeat-ring-repeat-pop (rring)
   "Cycle to the previous entry in the repeat ring RRING.
 
 This undoes the previous repetition, removes the record of the
@@ -151,18 +114,9 @@ repetition in the ring, and executes the previous entry."
     (when (virtual-ring-head-rotated-p ring)
       (virtual-ring-remove-last ring))
     (virtual-ring-rotate-backwards ring)
-    (repeat-ring-repeat-for-ring rring)))
+    (repeat-ring-repeat rring)))
 
-(defun repeat-ring-repeat-pop ()
-  "Cycle to the previous entry in the most recently used repeat ring.
-
-This undoes the previous repetition, removes the record of the
-repetition in the ring, and executes the previous entry."
-  (interactive)
-  (let ((rring (repeat-ring-current-ring)))
-    (repeat-ring-repeat-pop-for-ring rring)))
-
-(defun repeat-ring-repeat-recent-for-ring (rring)
+(defun repeat-ring-repeat-recent (rring)
   "Select a recent command on RRING and repeat it."
   (let* ((key-seqs (virtual-ring-contents
                     (repeat-ring-ring rring)))
@@ -173,12 +127,6 @@ repetition in the ring, and executes the previous entry."
          (index (cl-position to-repeat-str key-descriptions :test #'equal))
          (to-repeat (nth index key-seqs)))
     (repeat-ring--repeat rring to-repeat)))
-
-(defun repeat-ring-repeat-recent ()
-  "Select a recent command on the most recently used repeat ring and repeat it."
-  (interactive)
-  (let ((rring (repeat-ring-current-ring)))
-    (repeat-ring-repeat-recent-for-ring rring)))
 
 (defun repeat-ring-store (rring key-seq)
   "Store KEY-SEQ as an entry in RRING.

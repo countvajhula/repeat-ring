@@ -60,8 +60,6 @@
 
 (defconst fixture-test-topic-name "dummy-topic")
 
-(defconst fixture-all-topic-name "mantra-all-key-sequences")
-
 (defun fixture-0-ring (body)
   (let ((rring nil))
     (unwind-protect
@@ -84,20 +82,6 @@
   (with-fixture fixture-2-ring
     (repeat-ring-store rring fixture-test-element-3)
     (funcall body-3)))
-
-(defun fixture-two-rings (body-4)
-  (let ((rring1 nil)
-        (rring2 nil))
-    (unwind-protect
-        (progn (setq rring1 (repeat-ring-make fixture-ring-name))
-               (setq rring2 (repeat-ring-make fixture-ring-2-name))
-               (repeat-ring-subscribe rring1)
-               (repeat-ring-subscribe rring2)
-               (repeat-ring-store rring1 fixture-test-element)
-               (repeat-ring-store rring2 fixture-test-element)
-               (funcall body-4))
-      (repeat-ring-unsubscribe rring1)
-      (repeat-ring-unsubscribe rring2))))
 
 ;;
 ;; Tests
@@ -134,14 +118,6 @@
     (repeat-ring-clear-repeating rring)
     (should-not (repeat-ring-repeating rring))))
 
-(ert-deftest repeat-ring-current-ring-test ()
-  (with-fixture fixture-two-rings
-    (repeat-ring-repeat-for-ring rring1)
-    (should (equal rring1 (repeat-ring-current-ring))))
-  (with-fixture fixture-two-rings
-    (repeat-ring-repeat-for-ring rring2)
-    (should (equal rring2 (repeat-ring-current-ring)))))
-
 (ert-deftest repeat-ring-subscribe-test ()
   (with-fixture fixture-0-ring
     (unwind-protect
@@ -151,49 +127,23 @@
                         (virtual-ring-ring
                          (repeat-ring-ring rring))
                         fixture-test-element)))
-      (repeat-ring-unsubscribe rring)
+      (repeat-ring-unsubscribe rring fixture-test-topic-name)
       (pop (gethash fixture-test-topic-name
-                    pubsub-board))))
-  (with-fixture fixture-0-ring
-    (unwind-protect
-        (progn (repeat-ring-subscribe rring nil)
-               (pubsub-publish fixture-test-topic-name fixture-test-element)
-               ;; doesn't really test much since we aren't subscribing to any
-               ;; topic here, and using a particular one doesn't validate
-               ;; that it isn't subscribed at all
-               (should-not (ring-member
-                            (virtual-ring-ring
-                             (repeat-ring-ring rring))
-                            fixture-test-element)))
-      (repeat-ring-unsubscribe rring)
-      (pop (gethash fixture-test-topic-name
-                    pubsub-board))))
-  ;; "all" subscribes to all key sequences
-  (with-fixture fixture-0-ring
-    (unwind-protect
-        (progn (repeat-ring-subscribe rring 'all)
-               (pubsub-publish fixture-all-topic-name fixture-test-element)
-               (should (ring-member
-                        (virtual-ring-ring
-                         (repeat-ring-ring rring))
-                        fixture-test-element)))
-      (repeat-ring-unsubscribe rring)
-      (pop (gethash fixture-all-topic-name
                     pubsub-board)))))
 
-(ert-deftest repeat-ring-repeat-for-ring ()
+(ert-deftest repeat-ring-repeat ()
   (with-fixture fixture-0-ring
     (repeat-ring-store rring [])
-    (repeat-ring-repeat-for-ring rring)
+    (repeat-ring-repeat rring)
     (should (repeat-ring-repeating rring))))
 
-(ert-deftest repeat-ring-repeat-pop-for-ring ()
+(ert-deftest repeat-ring-repeat-pop ()
   ;; TODO: if already virtually rotated, then removes true head
   ;;       and not otherwise
   ;; TODO: rotates backwards, so head should be incremented
   (with-fixture fixture-0-ring
     (repeat-ring-store rring [])
-    (repeat-ring-repeat-for-ring rring)
+    (repeat-ring-repeat rring)
     (should (repeat-ring-repeating rring))))
 
 (ert-deftest repeat-ring-store-test ()
