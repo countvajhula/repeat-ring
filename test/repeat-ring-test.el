@@ -50,6 +50,10 @@
     (lambda ()
       ,@test)))
 
+(defconst fixture-ring-name "test")
+
+(defconst fixture-ring-2-name "test2")
+
 (defconst fixture-test-element "abcd")
 (defconst fixture-test-element-2 "efgh")
 (defconst fixture-test-element-3 "ijkl")
@@ -61,7 +65,7 @@
 (defun fixture-0-ring (body)
   (let ((rring nil))
     (unwind-protect
-        (progn (setq rring (repeat-ring-make))
+        (progn (setq rring (repeat-ring-make fixture-ring-name))
                (funcall body))
       ;; perhaps aid garbage collection
       (setq rring nil))))
@@ -85,8 +89,8 @@
   (let ((rring1 nil)
         (rring2 nil))
     (unwind-protect
-        (progn (setq rring1 (repeat-ring-make))
-               (setq rring2 (repeat-ring-make))
+        (progn (setq rring1 (repeat-ring-make fixture-ring-name))
+               (setq rring2 (repeat-ring-make fixture-ring-2-name))
                (repeat-ring-subscribe rring1)
                (repeat-ring-subscribe rring2)
                (repeat-ring-store rring1 fixture-test-element)
@@ -101,12 +105,12 @@
 
 (ert-deftest repeat-ring-test ()
   ;; null constructor
-  (should (vectorp (repeat-ring-make)))
-  (should (vectorp (repeat-ring-make 10)))
+  (should (vectorp (repeat-ring-make fixture-ring-name)))
+  (should (vectorp (repeat-ring-make fixture-ring-name 10)))
   (should (= 10 (ring-size
                  (virtual-ring-ring
                   (repeat-ring-ring
-                   (repeat-ring-make 10))))))
+                   (repeat-ring-make fixture-ring-name 10))))))
 
   ;; repeat-ring-ring
   (with-fixture fixture-0-ring

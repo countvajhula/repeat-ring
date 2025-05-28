@@ -40,20 +40,31 @@
 
 This is a dynamically sized ring.")
 
-(defun repeat-ring-make (&optional size)
+(defun repeat-ring-make (name &optional size)
   "Make a repeat ring named NAME of size SIZE.
 
-A repeat ring is an ordinary fixed-size ring that populates key
-sequences parsed on the topic NAME."
+A repeat ring is an ordinary fixed-size ring that may optionally be
+automatically populated with parsed key sequences, and which maintains
+minimal state to distinguish fresh commands from repeated commands."
   (let* ((size (or size repeat-ring-default-size))
          (ring (virtual-ring-make size)))
-    (vector ring nil)))
+    (vector name ring nil)))
 
-(defconst repeat-ring--index-ring 0
+(defconst repeat-ring--index-name 0
+  "The index of the name of the repeat ring.
+
+This name is used in any subscriptions to mantra parsers via pubsub,
+and may be used to unsubscribe the ring from these key sequences.")
+
+(defconst repeat-ring--index-ring 1
   "The index of the underlying ring in a repeat ring.")
 
-(defconst repeat-ring--index-repeating 1
+(defconst repeat-ring--index-repeating 2
   "The index of the item being repeated (if any) in a repeat ring.")
+
+(defun repeat-ring-name (rring)
+  "Get the name of the repeat ring RRING."
+  (seq-elt rring repeat-ring--index-name))
 
 (defun repeat-ring-ring (rring)
   "Get the underlying ring in RRING."
@@ -79,6 +90,10 @@ events and it will be up to you to populate it with repeatable
 commands any way you see fit. If TOPIC is `all', then the ring will be
 subscribed to all complete key sequences.
 
+The ring will be subscribed to TOPIC using its name as the subscriber
+name. This allows the ring name to be used to subsequently unsubscribe
+from TOPIC, if desired.
+
 Also add RRING to the global dynamic ring of repeat rings."
   (dynaring-insert repeat-ring-active-rings
                    rring)
@@ -88,6 +103,7 @@ Also add RRING to the global dynamic ring of repeat rings."
                  topic)))
     (when topic
       (pubsub-subscribe topic
+                        (repeat-ring-name rring)
                         (apply-partially #'repeat-ring-store rring)))))
 
 (defun repeat-ring-unsubscribe (rring)
