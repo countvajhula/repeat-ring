@@ -68,7 +68,10 @@ and may be used to unsubscribe the ring from these key sequences.")
   (seq-elt rring repeat-ring--index-repeating))
 
 (defun repeat-ring-set-repeating (rring repeating)
-  "Flag that an item is being repeated in RRING."
+  "Flag that an item is being repeated in RRING.
+
+This sets the REPEATING field, whose non-nil value implies repetition
+is in progress."
   (aset rring repeat-ring--index-repeating repeating))
 
 (defun repeat-ring-clear-repeating (rring)
@@ -79,7 +82,7 @@ and may be used to unsubscribe the ring from these key sequences.")
   "Subscribe RRING to TOPIC.
 
 The ring will be subscribed to TOPIC using its name as the subscriber
-name. This allows the ring name to be used to subsequently unsubscribe
+name.  This allows the ring name to be used to subsequently unsubscribe
 from TOPIC, if desired."
   (pubsub-subscribe topic
                     (repeat-ring-name rring)
@@ -91,10 +94,11 @@ from TOPIC, if desired."
                       (repeat-ring-name rring)))
 
 (defun repeat-ring--repeat (rring key-seq)
-  "Repeat KEY-SEQ.
+  "Repeat KEY-SEQ on RRING.
 
-Restore RRING as the head of `repeat-ring-active-rings', the dynamic
-ring of repeat rings where head is the most recently used one."
+This sets the `repeating' field to KEY-SEQ, which encodes this state
+in the ring so that the resulting fresh key sequence is appropriately
+handled when we attempt to store it."
   (repeat-ring-set-repeating rring key-seq)
   (execute-kbd-macro key-seq))
 
