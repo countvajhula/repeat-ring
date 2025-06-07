@@ -36,9 +36,13 @@
 (defun repeat-ring-make (name &optional size)
   "Make a repeat ring named NAME of size SIZE.
 
-A repeat ring is an ordinary fixed-size ring that may optionally be
-automatically populated with parsed key sequences, and which maintains
-minimal state to distinguish fresh commands from repeated commands."
+A repeat ring is a fixed-size ring. It maintains peculiar state to
+distinguish fresh commands from repeated commands, and also leverages
+the state of the underlying virtual ring to track which command is
+being repeated.
+
+A repeat ring may optionally be automatically populated with parsed
+key sequences through a pub/sub mechanism using the `pubsub' package."
   (let* ((size (or size repeat-ring-default-size))
          (ring (virtual-ring-make size)))
     (vector name ring nil)))
