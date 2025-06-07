@@ -98,14 +98,14 @@ from TOPIC, if desired."
   (pubsub-unsubscribe topic
                       (repeat-ring-name rring)))
 
-(defun repeat-ring--repeat (rring key-seq)
-  "Repeat KEY-SEQ on RRING.
+(defun repeat-ring--repeat (rring mantra)
+  "Repeat MANTRA on RRING.
 
-This sets the `repeating' field to KEY-SEQ, which encodes this state
+This sets the `repeating' field to MANTRA, which encodes this state
 in the ring so that the resulting fresh key sequence is appropriately
 handled when we attempt to store it."
-  (repeat-ring-set-repeating rring key-seq)
-  (mantra-eval key-seq))
+  (repeat-ring-set-repeating rring mantra)
+  (mantra-eval mantra))
 
 (defun repeat-ring-repeat (rring)
   "Repeat the last command on the repeat ring RRING."
@@ -127,27 +127,27 @@ repetition in the ring, and executes the previous entry."
 
 (defun repeat-ring-repeat-recent (rring)
   "Select a recent command on RRING and repeat it."
-  (let* ((key-seqs (virtual-ring-contents
+  (let* ((mantras (virtual-ring-contents
                     (repeat-ring-ring rring)))
          (key-descriptions (mapcar #'key-description
-                                   key-seqs))
+                                   mantras))
          (to-repeat-str (completing-read "Repeat: "
                                          key-descriptions))
          (index (cl-position to-repeat-str key-descriptions :test #'equal))
-         (to-repeat (nth index key-seqs)))
+         (to-repeat (nth index mantras)))
     (repeat-ring--repeat rring to-repeat)))
 
-(defun repeat-ring-store (rring key-seq)
-  "Store KEY-SEQ as an entry in RRING.
+(defun repeat-ring-store (rring mantra)
+  "Store MANTRA as an entry in RRING.
 
 Resets the virtual head to the most recently stored element,
-i.e., to KEY-SEQ."
+i.e., to MANTRA."
   (let* ((ring (repeat-ring-ring rring))
          (ring-empty (virtual-ring-empty-p ring))
-         (last-stored-key-seq (unless ring-empty
+         (last-stored-mantra (unless ring-empty
                                 (virtual-ring-last-entry ring)))
-         (successive-duplicate (equal key-seq
-                                      last-stored-key-seq))
+         (successive-duplicate (equal mantra
+                                      last-stored-mantra))
          (repetition (repeat-ring-repeating rring)))
     (when (or ring-empty
               ;; don't record successive duplicates
@@ -158,7 +158,7 @@ i.e., to KEY-SEQ."
       ;; entry, as it is, in fact, the most recently executed
       ;; macro.
       (virtual-ring-store ring
-                          key-seq
+                          mantra
                           repetition))
     (when repetition
       (repeat-ring-clear-repeating rring))))
