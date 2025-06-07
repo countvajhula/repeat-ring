@@ -30,6 +30,7 @@
 
 (require 'virtual-ring)
 (require 'pubsub)
+(require 'mantra)
 
 (defconst repeat-ring-default-size 20)
 
@@ -104,7 +105,7 @@ This sets the `repeating' field to KEY-SEQ, which encodes this state
 in the ring so that the resulting fresh key sequence is appropriately
 handled when we attempt to store it."
   (repeat-ring-set-repeating rring key-seq)
-  (execute-kbd-macro key-seq))
+  (mantra-eval key-seq))
 
 (defun repeat-ring-repeat (rring)
   "Repeat the last command on the repeat ring RRING."
