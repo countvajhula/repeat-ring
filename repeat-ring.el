@@ -105,7 +105,9 @@ This sets the `repeating' field to MANTRA, which encodes this state
 in the ring so that the resulting fresh key sequence is appropriately
 handled when we attempt to store it."
   (repeat-ring-set-repeating rring mantra)
-  (mantra-eval mantra))
+  (unwind-protect
+      (mantra-eval mantra)
+    (repeat-ring-clear-repeating rring)))
 
 (defun repeat-ring-repeat (rring)
   "Repeat the last command on the repeat ring RRING."
@@ -157,11 +159,17 @@ i.e., to MANTRA."
       ;; Note that we still do record the repetition as a fresh
       ;; entry, as it is, in fact, the most recently executed
       ;; macro.
-      (virtual-ring-store ring
-                          mantra
-                          repetition))
-    (when repetition
-      (repeat-ring-clear-repeating rring))))
+      (if repetition
+          (virtual-ring-store ring
+                              ;; ignore the newly parsed mantra
+                              ;; and just store what's being repeated.
+                              ;; this is because in the presence of buffer
+                              ;; changes, the repetition may not
+                              ;; be parsed the same way as when recorded.
+                              repetition
+                              :preserve-head)
+        (virtual-ring-store ring
+                            mantra)))))
 
 
 (provide 'repeat-ring)
