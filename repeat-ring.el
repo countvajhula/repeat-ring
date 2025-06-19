@@ -129,7 +129,7 @@ repetition in the ring, and executes the previous entry."
   "Select a recent command on RRING and repeat it."
   (let* ((mantras (virtual-ring-contents
                     (repeat-ring-ring rring)))
-         (key-descriptions (mapcar #'key-description
+         (key-descriptions (mapcar #'prin1-to-string
                                    mantras))
          (to-repeat-str (completing-read "Repeat: "
                                          key-descriptions))
