@@ -123,8 +123,6 @@ This undoes the previous repetition, removes the record of the
 repetition in the ring, and executes the previous entry."
   (let ((ring (repeat-ring-ring rring)))
     (undo-only 1)
-    (when (virtual-ring-head-rotated-p ring)
-      (virtual-ring-remove-last ring))
     (virtual-ring-rotate-backwards ring)
     (repeat-ring-repeat rring)))
 
