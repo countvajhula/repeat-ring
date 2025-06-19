@@ -31,6 +31,7 @@
 (require 'virtual-ring)
 (require 'pubsub)
 (require 'mantra)
+(require 'mantra-util)
 
 (defconst repeat-ring-default-size 20)
 
@@ -127,12 +128,20 @@ repetition in the ring, and executes the previous entry."
     (virtual-ring-rotate-backwards ring)
     (repeat-ring-repeat rring)))
 
+(defun repeat-ring--readable-substring (str &optional len)
+  "A readable substring of STR of length up to LEN, defaulting to 20."
+  (let ((len (or len 20))
+        (strlen (length str)))
+    (substring-no-properties str 0 (if (> len strlen)
+                                       strlen
+                                     len))))
+
 (defun repeat-ring-repeat-recent (rring)
   "Select a recent command on RRING and repeat it."
   (let* ((mantras (virtual-ring-contents
                     (repeat-ring-ring rring)))
-         (key-descriptions (mapcar #'prin1-to-string
-                                   mantras))
+         (key-descriptions (mapcar #'repeat-ring--readable-substring
+                                   (mapcar #'mantra-pretty-print mantras)))
          (to-repeat-str (completing-read "Repeat: "
                                          key-descriptions))
          (index (cl-position to-repeat-str key-descriptions :test #'equal))
