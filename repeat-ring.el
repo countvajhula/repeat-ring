@@ -38,7 +38,7 @@
 (defun repeat-ring-make (name &optional size)
   "Make a repeat ring named NAME of size SIZE.
 
-A repeat ring is a fixed-size ring. It maintains peculiar state to
+A repeat ring is a fixed-size ring.  It maintains peculiar state to
 distinguish fresh commands from repeated commands, and also leverages
 the state of the underlying virtual ring to track which command is
 being repeated.
