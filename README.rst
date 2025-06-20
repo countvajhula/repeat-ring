@@ -16,7 +16,7 @@ repeat-ring
 ===========
 A structured and configurable way to keep track of and repeat activity, including key sequences, inspired by both Vim and Emacs keyboard macros.
 
-Repeat-ring uses the Mantra parser to allow you to define "regex"-like patterns on your keyboard activity, where each such pattern has a corresponding ring. Every time such a pattern is encountered in your activity, it is stored in that ring (avoiding successive duplicates). You can then repeat as well as navigate these recorded key sequences on each of these distinct rings. The activity stored on each ring is governed exclusively by the patterns and conditions you indicate for that ring, and do not interfere with one another.
+Repeat-ring uses the `Mantra <https://github.com/countvajhula/mantra>`_ parser to allow you to define "regex"-like patterns on your keyboard activity, where each such pattern has a corresponding ring. Every time such a pattern is encountered in your activity, it is stored in that ring (avoiding successive duplicates). You can then repeat as well as navigate these recorded key sequences on each of these distinct rings. The activity stored on each ring is governed exclusively by the patterns and conditions you indicate for that ring, and do not interfere with one another.
 
 It's like Emacs's keyboard macros in that there is a history of macros maintained on a ring, and it's like Vim's dot operator in that it records such macros *implicitly* based on patterns that you configure. In addition, it supports any number of rings and arbitrary conditions for recording activity, enabling a rich diversity of context-sensitive repeatable macros.
 
@@ -37,11 +37,11 @@ Repeat-ring is not on a package archive such as `MELPA <https://melpa.org/>`_ ye
 How It Works
 ------------
 
-(The following is mostly a description of how Mantra works. Repeat-ring is a small package that subscribes to Mantra parsers to implicitly store activity on stateful ("virtual") rings, and providing a handful of useful commands for repetition.)
+(The following is mostly a description of how `Mantra <https://github.com/countvajhula/mantra>`_ works. Repeat-ring is a small package that subscribes to Mantra parsers to implicitly store activity on stateful ("virtual") rings, and providing a handful of useful commands for repetition.)
 
 Upon each key sequence being entered by you on the `Emacs command loop <https://www.gnu.org/software/emacs/manual/html_node/elisp/Command-Overview.html>`_, a listener (on the pre-command and post-command hooks) does basic "lexing" on this input to ensure that it isn't an empty or otherwise invalid sequence. Then, it notifies every configured repeat ring of the key sequence. Each ring checks its own condition to start recording the sequence. If the condition is met, or if recording is already in progress, then the key sequence is accumulated in a local state variable until either a stop condition is met (in which case the full composite sequence is stored in the ring), or an abort condition is met (in which case the state is cleared and is not stored).
 
-The repeat rings themselves are fixed-size ring data structures, so that they contain a history of length N, with the oldest key sequences being overwritten as new ones are recorded. In addition, they support stateful "rotation" (via the virtual-ring package), allowing you to cycle through recent commands instead of just the latest one.
+The repeat rings themselves are fixed-size ring data structures, so that they contain a history of length N, with the oldest key sequences being overwritten as new ones are recorded. In addition, they support stateful "rotation" (via the `virtual-ring <https://github.com/countvajhula/virtual-ring>`_ package), allowing you to cycle through recent commands instead of just the latest one.
 
 Key sequences on each repeat ring may be "repeated" by evaluating them as *mantras*, which are a generalized form of keyboard macro that can in principle express any kind of user activity.
 
