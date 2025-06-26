@@ -75,9 +75,9 @@ So instead, let's store a different kind of mantra, an explicit buffer insertion
 
 Now, ``C-c .`` inserts "hello" into the buffer, no matter what the keys in "hello" may happen to mean in your particular keybinding (e.g. Evil) configuration.
 
-This is useful in cases where we are interested in storing the *effect* of our keyboard activity and not the keyboard activity itself, and where these aren't the same. For instance, in modern completion UIs, selecting a candidate from a completion menu may entail the key sequence "he\<enter\>", if you happen to select "hello" from the completion menu by hitting Enter. Now, replaying this as a *key sequence* would not insert "hello" into the buffer but "he\\n"!
+This is useful in cases where we are interested in storing the *effect* of our keyboard activity and not the keyboard activity itself, and where these aren't the same. For instance, when using modern completion UIs, if you enter a few characters and then select "hello" from the completion menu by hitting Enter, that may entail the key sequence "he\<enter\>" on your part. Now, replaying this as a *key sequence* would not insert "hello" into the buffer but "he\\n"!
 
-Mantras are able to express such meaningful activities independently of any keybindings, and can even express arbitrary actions in the form of lambdas, making them a very general way to emulate activity within Emacs.
+Mantras are able to express such meaningful activities independently of any keybindings (e.g., via the ``insertion`` mantra to express buffer text insertion), and can even express arbitrary actions in the form of lambdas, making them a very general way to emulate activity within Emacs.
 
 .. code-block:: elisp
 
