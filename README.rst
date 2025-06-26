@@ -63,7 +63,9 @@ This stores the literal key sequence "hello", acting just like a standard keyboa
 
 It should have inserted the text "hello" into the buffer.
 
-But the thing about keyboard macros is that they are purely syntax without semantics. The same macro may mean one thing when you entered it the first time, but a different thing when you execute it again at a later point. For instance, if you happen to be an Evil user, then you know that "h" means "go backwards one character" while in Normal state, but in insert state, it means "insert the character h" (Evil is the most convenient example here to illustrate the point — if you aren't an Evil user, please read on, and you should still get the idea!). Simply replaying the keyboard macro while in Normal state would *not* have the effect of inserting "hello" into the buffer, even though that's what you may have intended when you stored the macro.
+But the thing about keyboard macros is that they are purely syntax without semantics. The same macro may mean one thing when you entered it the first time, but a different thing when you execute it again at a later point.
+
+For instance, if you happen to be an Evil user, then you know that "h" means "go backwards one character" while in Normal state, but in insert state, it means "insert the character h" (Evil is the most convenient example here to illustrate the point — if you aren't an Evil user, please read on, and you should still get the idea!). Simply replaying the keyboard macro while in Normal state would *not* have the effect of inserting "hello" into the buffer, even though that's what you may have intended when you stored the macro.
 
 So instead, let's store a different kind of mantra, an explicit buffer insertion, on the repeat ring.
 
