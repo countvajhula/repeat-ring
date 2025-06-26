@@ -130,9 +130,10 @@ repetition in the ring, and executes the previous entry."
   "A readable substring of STR of length up to LEN, defaulting to 20."
   (let ((len (or len 20))
         (strlen (length str)))
-    (substring-no-properties str 0 (if (> len strlen)
-                                       strlen
-                                     len))))
+    (if (> strlen len)
+        (concat (substring-no-properties str 0 (1- len))
+                "…")
+      (substring-no-properties str 0 strlen))))
 
 (defun repeat-ring-repeat-recent (rring)
   "Select a recent command on RRING and repeat it."
