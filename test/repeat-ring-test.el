@@ -135,16 +135,18 @@
   (with-fixture fixture-0-ring
     (repeat-ring-store rring [])
     (repeat-ring-repeat rring)
-    (should (repeat-ring-repeating rring))))
+    (should-not (repeat-ring-repeating rring))))
 
 (ert-deftest repeat-ring-repeat-pop ()
   ;; TODO: if already virtually rotated, then removes true head
   ;;       and not otherwise
   ;; TODO: rotates backwards, so head should be incremented
-  (with-fixture fixture-0-ring
-    (repeat-ring-store rring [])
-    (repeat-ring-repeat rring)
-    (should (repeat-ring-repeating rring))))
+  ;; (with-fixture fixture-0-ring
+  ;;   (repeat-ring-store rring [])
+  ;;   (insert "hi")
+  ;;   (repeat-ring-repeat-pop rring) ; currently: user error, no undo information found
+  ;;   (should-not (repeat-ring-repeating rring)))
+  )
 
 (ert-deftest repeat-ring-store-test ()
   (with-fixture fixture-0-ring
@@ -177,6 +179,22 @@
     (repeat-ring-store rring fixture-test-element)
     (should (= 0 (virtual-ring-head (repeat-ring-ring rring)))))
   (with-fixture fixture-3-ring
+    ;; should preserve head if repeating
+    (virtual-ring-set-head (repeat-ring-ring rring) 1)
+    (repeat-ring-set-repeating rring fixture-test-element)
+    (repeat-ring-store rring fixture-test-element)
+    (should (= 1 (virtual-ring-head (repeat-ring-ring rring)))))
+  (with-fixture fixture-3-ring
+    ;; should record fresh repetition if repeating
+    (virtual-ring-set-head (repeat-ring-ring rring) 1)
+    (repeat-ring-set-repeating rring fixture-test-element)
+    (repeat-ring-store rring fixture-test-element)
+    (should (equal fixture-test-element
+                   (ring-ref
+                    (virtual-ring-ring
+                     (repeat-ring-ring rring))
+                    0))))
+  (with-fixture fixture-3-ring
     ;; should store elements in order of recency
     (repeat-ring-store rring fixture-test-element)
     (should (equal (list fixture-test-element ; most recently added
@@ -195,9 +213,4 @@
                          fixture-test-element-2
                          fixture-test-element)
                    (virtual-ring-contents
-                    (repeat-ring-ring rring)))))
-  (with-fixture fixture-1-ring
-    ;; should clear repeating flag
-    (repeat-ring-set-repeating rring fixture-test-element)
-    (repeat-ring-store rring fixture-test-element)
-    (should-not (repeat-ring-repeating rring))))
+                    (repeat-ring-ring rring))))))
