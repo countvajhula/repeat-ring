@@ -123,16 +123,7 @@ Repeat-ring is more expressive than Evil's dot, and it's usable in any Emacs set
 Installation
 ------------
 
-Repeat-ring is not on a package archive such as `MELPA <https://melpa.org/>`_ yet, but you can install it using `Straight.el <https://github.com/radian-software/straight.el>`_ (or `Elpaca <https://github.com/progfolio/elpaca>`_) by putting this somewhere in your :code:`.emacs.d`:
-
-.. code-block:: elisp
-
-  (use-package repeat-ring
-    :straight
-    (repeat-ring
-      :type git
-      :host github
-      :repo "countvajhula/repeat-ring"))
+Repeat-ring is on `MELPA <https://melpa.org/>`_. You can install it in the usual way using your package manager of choice (e.g., `Straight.el <https://github.com/radian-software/straight.el>`_, `Elpaca <https://github.com/progfolio/elpaca>`_, or Emacs's built-in package.el), after ensuring you have MELPA in your configured list of package archives.
 
 Overview
 --------
