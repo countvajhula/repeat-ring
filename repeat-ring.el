@@ -2,8 +2,8 @@
 
 ;; Author: Sid Kasivajhula <sid@countvajhula.com>
 ;; URL: https://github.com/countvajhula/repeat-ring
-;; Version: 0.0
-;; Package-Requires: ((emacs "25.1") (virtual-ring "0.0") (pubsub "0.0") (mantra "0.0"))
+;; Version: 0.1
+;; Package-Requires: ((emacs "25.1") (virtual-ring "0.1") (pubsub "0.1") (mantra "0.1"))
 
 ;; This file is NOT a part of Gnu Emacs.
 
