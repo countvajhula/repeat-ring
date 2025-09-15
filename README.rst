@@ -1,8 +1,8 @@
 .. image:: https://github.com/countvajhula/repeat-ring/actions/workflows/test.yml/badge.svg
     :target: https://github.com/countvajhula/repeat-ring/actions
 
-.. image:: https://coveralls.io/repos/github/countvajhula/repeat-ring/badge.svg?branch=master
-    :target: https://coveralls.io/github/countvajhula/repeat-ring?branch=master
+.. image:: https://coveralls.io/repos/github/countvajhula/repeat-ring/badge.svg?branch=main
+    :target: https://coveralls.io/github/countvajhula/repeat-ring?branch=main
 
 .. image:: https://melpa.org/packages/repeat-ring-badge.svg
     :alt: MELPA
