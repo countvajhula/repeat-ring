@@ -28,6 +28,7 @@
 
 ;;; Code:
 
+(require 'seq)
 (require 'virtual-ring)
 (require 'pubsub)
 (require 'mantra)
